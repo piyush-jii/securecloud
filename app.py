@@ -278,3 +278,5 @@ def change_password():
 # ---------------- INIT ----------------
 
 init_db()
+# For Render / Gunicorn
+application = app
