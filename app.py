@@ -81,7 +81,6 @@ def login():
         cur.execute("SELECT * FROM users WHERE username=? AND password=?", (u, p))
         user = cur.fetchone()
         db.close()
-
         if user:
             session["user"] = u
             session["theme"] = "light"
