@@ -83,6 +83,7 @@ h2{
     overflow:hidden;
 }
 
+/* 🔧 FIX #1 — overlay click blocker removed */
 .file::after{
     content:"";
     position:absolute;
@@ -90,6 +91,7 @@ h2{
     background:linear-gradient(120deg,transparent,rgba(255,255,255,.18),transparent);
     opacity:0;
     transition:.35s;
+    pointer-events:none; /* ⭐ MOST IMPORTANT FIX */
 }
 
 .file:hover::after{
@@ -143,6 +145,8 @@ h2{
 .actions{
     display:flex;
     gap:12px;
+    position:relative;
+    z-index:10; /* 🔧 FIX #2 — buttons always on top */
 }
 
 .icon-btn{
@@ -262,18 +266,12 @@ h2{
     </div>
 
     <div class="actions">
-
-        <!-- 🔒 LOCK / UNLOCK (FIXED) -->
-        <a class="icon-btn locked"
-           href="/toggle_lock/{{ f[0] | urlencode }}">
-           {% if f[1] %}🔒{% else %}🔓{% endif %}
+        <a class="icon-btn locked" href="/toggle_lock/{{ f[0]|urlencode }}">
+            {% if f[1] %}🔒{% else %}🔓{% endif %}
         </a>
 
-        <!-- ⬇ DOWNLOAD (FIXED) -->
-        <a class="icon-btn download"
-           href="/download/{{ f[0] | urlencode }}">⬇</a>
+        <a class="icon-btn download" href="/download/{{ f[0]|urlencode }}">⬇</a>
 
-        <!-- 🗑 DELETE (FIXED) -->
         <span class="icon-btn delete"
               onclick="confirmDelete('{{ f[0] }}')">🗑</span>
     </div>
@@ -285,7 +283,6 @@ h2{
 
 <div class="section">
     <div class="section-title">✨ Tips</div>
-
     <div class="tips-box">
         <div class="list-card">• Use meaningful file names for easy access</div>
         <div class="list-card">• Lock sensitive files for extra security</div>
