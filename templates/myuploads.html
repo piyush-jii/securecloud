@@ -198,7 +198,6 @@ h2{
     margin-bottom:22px;
 }
 
-/* UPDATED TIPS BOX (SCROLLABLE) */
 .tips-box{
     max-height:160px;
     overflow-y:auto;
@@ -263,11 +262,20 @@ h2{
     </div>
 
     <div class="actions">
-        {% if f[1] %}
-        <span class="icon-btn locked">🔒</span>
-        {% endif %}
-        <a class="icon-btn download" href="/download/{{ f[0] }}">⬇</a>
-        <span class="icon-btn delete" onclick="confirmDelete('{{ f[0] }}')">🗑</span>
+
+        <!-- 🔒 LOCK / UNLOCK (FIXED) -->
+        <a class="icon-btn locked"
+           href="/toggle_lock/{{ f[0] | urlencode }}">
+           {% if f[1] %}🔒{% else %}🔓{% endif %}
+        </a>
+
+        <!-- ⬇ DOWNLOAD (FIXED) -->
+        <a class="icon-btn download"
+           href="/download/{{ f[0] | urlencode }}">⬇</a>
+
+        <!-- 🗑 DELETE (FIXED) -->
+        <span class="icon-btn delete"
+              onclick="confirmDelete('{{ f[0] }}')">🗑</span>
     </div>
 </div>
 {% endfor %}
@@ -293,7 +301,7 @@ h2{
 <script>
 function confirmDelete(file){
     if(confirm("Delete this file?\n\n"+file)){
-        window.location.href="/delete/"+file;
+        window.location.href="/delete/"+encodeURIComponent(file);
     }
 }
 </script>
