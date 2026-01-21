@@ -187,7 +187,7 @@ def myuploads():
 
     return render_template("myuploads.html", files=files, theme=session.get("theme"))
 
-# ---------------- FIXED FILE ACTIONS ----------------
+# ---------------- FILE ACTIONS ----------------
 
 @app.route("/download/<path:name>")
 def download(name):
@@ -218,6 +218,32 @@ def delete(name):
     db.close()
 
     log_action(session["user"], "Deleted", filename)
+    return redirect("/myuploads")
+
+@app.route("/toggle_lock/<path:name>")
+def toggle_lock(name):
+    if "user" not in session:
+        return redirect("/")
+
+    filename = unquote(name)
+    db = get_db()
+    cur = db.cursor()
+
+    cur.execute(
+        "SELECT locked FROM files WHERE username=? AND filename=?",
+        (session["user"], filename)
+    )
+    row = cur.fetchone()
+
+    if row:
+        new_val = 0 if row[0] == 1 else 1
+        cur.execute(
+            "UPDATE files SET locked=? WHERE username=? AND filename=?",
+            (new_val, session["user"], filename)
+        )
+        db.commit()
+
+    db.close()
     return redirect("/myuploads")
 
 # ---------------- INIT ----------------
