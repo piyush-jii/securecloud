@@ -2,7 +2,10 @@ from flask import Flask, render_template, request, redirect, session, send_from_
 import os, sqlite3, datetime
 
 app = Flask(__name__)
-app.secret_key = "securecloud_secret_key"
+
+# ---------------- CONFIG ----------------
+
+app.secret_key = os.environ.get("SECRET_KEY", "fallback-secret")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_ROOT = os.path.join(BASE_DIR, "uploads")
@@ -272,8 +275,6 @@ def change_password():
 
     return render_template("change_password.html", error=error)
 
-# ---------------- MAIN ----------------
+# ---------------- INIT ----------------
 
-if __name__ == "__main__":
-    init_db()
-    app.run(host="0.0.0.0", port=5000)
+init_db()
