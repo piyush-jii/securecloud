@@ -3,8 +3,6 @@ import os, sqlite3, datetime
 from urllib.parse import unquote
 
 app = Flask(__name__)
-application = app   # 🔥 Render / Gunicorn ke liye
-
 app.secret_key = "securecloud_secret_key"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -91,6 +89,27 @@ def login():
 
     return render_template("login.html", error=error)
 
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    error = None
+    if request.method == "POST":
+        u = request.form["username"]
+        p = request.form["password"]
+
+        if len(p) < 5:
+            error = "Password must be at least 5 characters"
+        else:
+            try:
+                db = get_db()
+                db.execute("INSERT INTO users VALUES (?,?)", (u, p))
+                db.commit()
+                db.close()
+                return redirect("/")
+            except:
+                error = "Username already exists"
+
+    return render_template("register.html", error=error)
+
 @app.route("/logout")
 def logout():
     session.clear()
@@ -110,28 +129,22 @@ def dashboard():
     cur.execute("SELECT filename, locked FROM files WHERE username=?", (user,))
     files = cur.fetchall()
 
-    count = len(files)
-    locked = sum(1 for f in files if f[1] == 1)
-
     size = 0
     for f in os.listdir(user_folder(user)):
         size += os.path.getsize(os.path.join(user_folder(user), f))
     size = round(size / 1024 / 1024, 2)
 
-    cur.execute(
-        "SELECT * FROM logs WHERE username=? ORDER BY time DESC LIMIT 5",
-        (user,)
-    )
+    cur.execute("SELECT * FROM logs WHERE username=? ORDER BY time DESC LIMIT 5", (user,))
     logs = cur.fetchall()
     db.close()
 
     return render_template(
         "dashboard.html",
         user=user,
-        count=count,
+        count=len(files),
         size=size,
         quota=100,
-        locked=locked,
+        locked=sum(1 for f in files if f[1] == 1),
         logs=logs,
         theme=session.get("theme", "light")
     )
@@ -145,14 +158,13 @@ def upload():
 
     file = request.files["file"]
     lock = request.form.get("lock")
-    expiry = int(request.form.get("expiry", 0))
 
     if file:
         file.save(os.path.join(user_folder(session["user"]), file.filename))
         db = get_db()
         db.execute(
             "INSERT INTO files VALUES (?,?,?,?)",
-            (session["user"], file.filename, 1 if lock else 0, expiry)
+            (session["user"], file.filename, 1 if lock else 0, 0)
         )
         db.commit()
         db.close()
@@ -169,40 +181,30 @@ def myuploads():
 
     db = get_db()
     cur = db.cursor()
-    cur.execute(
-        "SELECT filename, locked FROM files WHERE username=?",
-        (session["user"],)
-    )
+    cur.execute("SELECT filename, locked FROM files WHERE username=?", (session["user"],))
     files = cur.fetchall()
     db.close()
 
     return render_template("myuploads.html", files=files, theme=session.get("theme"))
 
-# ---------------- DOWNLOAD (FIXED) ----------------
+# ---------------- FIXED FILE ACTIONS ----------------
 
 @app.route("/download/<path:name>")
 def download(name):
     if "user" not in session:
         return redirect("/")
 
-    name = unquote(name)
-    log_action(session["user"], "Downloaded", name)
-
-    return send_from_directory(
-        user_folder(session["user"]),
-        name,
-        as_attachment=True
-    )
-
-# ---------------- DELETE (FIXED) ----------------
+    filename = unquote(name)
+    log_action(session["user"], "Downloaded", filename)
+    return send_from_directory(user_folder(session["user"]), filename, as_attachment=True)
 
 @app.route("/delete/<path:name>")
 def delete(name):
     if "user" not in session:
         return redirect("/")
 
-    name = unquote(name)
-    path = os.path.join(user_folder(session["user"]), name)
+    filename = unquote(name)
+    path = os.path.join(user_folder(session["user"]), filename)
 
     if os.path.exists(path):
         os.remove(path)
@@ -210,15 +212,15 @@ def delete(name):
     db = get_db()
     db.execute(
         "DELETE FROM files WHERE username=? AND filename=?",
-        (session["user"], name)
+        (session["user"], filename)
     )
     db.commit()
     db.close()
 
-    log_action(session["user"], "Deleted", name)
+    log_action(session["user"], "Deleted", filename)
     return redirect("/myuploads")
 
-# ---------------- MAIN ----------------
+# ---------------- INIT ----------------
 
 init_db()
 
