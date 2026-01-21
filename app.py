@@ -115,6 +115,77 @@ def logout():
     session.clear()
     return redirect("/")
 
+# ---------------- FORGOT PASSWORD ----------------
+
+@app.route("/forgot_password", methods=["GET", "POST"])
+def forgot_password():
+    error = None
+    success = None
+
+    if request.method == "POST":
+        username = request.form.get("username")
+        new = request.form.get("new")
+
+        if len(new) < 5:
+            error = "Password must be at least 5 characters"
+        else:
+            db = get_db()
+            cur = db.cursor()
+            cur.execute("SELECT * FROM users WHERE username=?", (username,))
+            user = cur.fetchone()
+
+            if user:
+                cur.execute(
+                    "UPDATE users SET password=? WHERE username=?",
+                    (new, username)
+                )
+                db.commit()
+                db.close()
+                success = "Password reset successful"
+            else:
+                error = "Username not found"
+
+    return render_template("forgot_password.html", error=error, success=success)
+
+# ---------------- CHANGE PASSWORD ----------------
+
+@app.route("/change_password", methods=["GET", "POST"])
+def change_password():
+    if "user" not in session:
+        return redirect("/")
+
+    error = None
+
+    if request.method == "POST":
+        old = request.form.get("old")
+        new = request.form.get("new")
+        confirm = request.form.get("confirm")
+
+        if new != confirm:
+            error = "Passwords do not match"
+        else:
+            db = get_db()
+            cur = db.cursor()
+            cur.execute(
+                "SELECT * FROM users WHERE username=? AND password=?",
+                (session["user"], old)
+            )
+            user = cur.fetchone()
+
+            if user:
+                cur.execute(
+                    "UPDATE users SET password=? WHERE username=?",
+                    (new, session["user"])
+                )
+                db.commit()
+                db.close()
+                log_action(session["user"], "Password Changed")
+                return redirect("/dashboard")
+            else:
+                error = "Old password incorrect"
+
+    return render_template("change_password.html", error=error, theme=session.get("theme"))
+
 # ---------------- DASHBOARD ----------------
 
 @app.route("/dashboard")
@@ -148,117 +219,6 @@ def dashboard():
         logs=logs,
         theme=session.get("theme", "light")
     )
-
-# ---------------- THEME TOGGLE (✅ FIXED) ----------------
-
-@app.route("/toggle_theme")
-def toggle_theme():
-    if "user" not in session:
-        return redirect("/")
-
-    if session.get("theme") == "dark":
-        session["theme"] = "light"
-    else:
-        session["theme"] = "dark"
-
-    return redirect(request.referrer or "/dashboard")
-
-# ---------------- UPLOAD ----------------
-
-@app.route("/upload", methods=["POST"])
-def upload():
-    if "user" not in session:
-        return redirect("/")
-
-    file = request.files["file"]
-    lock = request.form.get("lock")
-
-    if file:
-        file.save(os.path.join(user_folder(session["user"]), file.filename))
-        db = get_db()
-        db.execute(
-            "INSERT INTO files VALUES (?,?,?,?)",
-            (session["user"], file.filename, 1 if lock else 0, 0)
-        )
-        db.commit()
-        db.close()
-        log_action(session["user"], "Uploaded", file.filename)
-
-    return redirect("/dashboard")
-
-# ---------------- MY UPLOADS ----------------
-
-@app.route("/myuploads")
-def myuploads():
-    if "user" not in session:
-        return redirect("/")
-
-    db = get_db()
-    cur = db.cursor()
-    cur.execute("SELECT filename, locked FROM files WHERE username=?", (session["user"],))
-    files = cur.fetchall()
-    db.close()
-
-    return render_template("myuploads.html", files=files, theme=session.get("theme"))
-
-# ---------------- FILE ACTIONS ----------------
-
-@app.route("/download/<path:name>")
-def download(name):
-    if "user" not in session:
-        return redirect("/")
-
-    filename = unquote(name)
-    log_action(session["user"], "Downloaded", filename)
-    return send_from_directory(user_folder(session["user"]), filename, as_attachment=True)
-
-@app.route("/delete/<path:name>")
-def delete(name):
-    if "user" not in session:
-        return redirect("/")
-
-    filename = unquote(name)
-    path = os.path.join(user_folder(session["user"]), filename)
-
-    if os.path.exists(path):
-        os.remove(path)
-
-    db = get_db()
-    db.execute(
-        "DELETE FROM files WHERE username=? AND filename=?",
-        (session["user"], filename)
-    )
-    db.commit()
-    db.close()
-
-    log_action(session["user"], "Deleted", filename)
-    return redirect("/myuploads")
-
-@app.route("/toggle_lock/<path:name>")
-def toggle_lock(name):
-    if "user" not in session:
-        return redirect("/")
-
-    filename = unquote(name)
-    db = get_db()
-    cur = db.cursor()
-
-    cur.execute(
-        "SELECT locked FROM files WHERE username=? AND filename=?",
-        (session["user"], filename)
-    )
-    row = cur.fetchone()
-
-    if row:
-        new_val = 0 if row[0] == 1 else 1
-        cur.execute(
-            "UPDATE files SET locked=? WHERE username=? AND filename=?",
-            (new_val, session["user"], filename)
-        )
-        db.commit()
-
-    db.close()
-    return redirect("/myuploads")
 
 # ---------------- INIT ----------------
 
