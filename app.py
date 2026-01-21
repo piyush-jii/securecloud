@@ -149,6 +149,20 @@ def dashboard():
         theme=session.get("theme", "light")
     )
 
+# ---------------- THEME TOGGLE (✅ FIXED) ----------------
+
+@app.route("/toggle_theme")
+def toggle_theme():
+    if "user" not in session:
+        return redirect("/")
+
+    if session.get("theme") == "dark":
+        session["theme"] = "light"
+    else:
+        session["theme"] = "dark"
+
+    return redirect(request.referrer or "/dashboard")
+
 # ---------------- UPLOAD ----------------
 
 @app.route("/upload", methods=["POST"])
