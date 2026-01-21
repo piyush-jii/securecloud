@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    font-family:'Segoe UI',Arial;
+}
+
+body{
+    min-height:100vh;
+    background:linear-gradient(135deg,#667eea,#764ba2);
+    color:white;
+    overflow-x:hidden;
+    scroll-behavior:smooth;
+}
+
+.dark{
+    background:#0f172a;
+}
+
+.back-btn{
+    position:fixed;
+    top:18px;
+    left:18px;
+    z-index:2000;
+    padding:8px 14px;
+    border-radius:10px;
+    background:rgba(0,0,0,0.35);
+    color:white;
+    text-decoration:none;
+    font-weight:600;
+    backdrop-filter:blur(8px);
+}
+
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:20px 40px;
+}
+
+.logo{
+    font-size:22px;
+    font-weight:700;
+    letter-spacing:1px;
+    margin-left:70px;
+    margin-top:6px;
+}
+
+.profile{
+    display:flex;
+    align-items:center;
+    gap:15px;
+}
+
+.avatar{
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    background:#22c55e;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    font-size:18px;
+}
+
+.settings-btn{
+    font-size:26px;
+    cursor:pointer;
+}
+
+.hero{
+    padding:40px;
+    text-align:center;
+}
+
+.hero h1{
+    font-size:38px;
+    margin-bottom:10px;
+}
+
+.hero p{
+    opacity:0.9;
+    font-size:16px;
+}
+
+.stats{
+    display:flex;
+    justify-content:center;
+    gap:25px;
+    padding:10px 40px 30px;
+    flex-wrap:wrap;
+}
+
+.stat-card{
+    min-width:230px;
+    padding:20px 25px;
+    border-radius:18px;
+    background:rgba(255,255,255,0.18);
+    backdrop-filter:blur(12px);
+    box-shadow:0 15px 30px rgba(0,0,0,0.25);
+    text-align:center;
+    transition:0.3s;
+}
+
+.stat-card:hover{
+    transform:translateY(-6px);
+}
+
+.stat-card h2{
+    margin-top:10px;
+    font-size:28px;
+}
+
+.progress{
+    margin-top:12px;
+    height:10px;
+    background:rgba(255,255,255,0.3);
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.progress span{
+    display:block;
+    height:100%;
+    background:#22c55e;
+    width:{{ (size/quota)*100 }}%;
+}
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:30px;
+    padding:40px;
+}
+
+.card{
+    padding:30px;
+    border-radius:22px;
+    background:rgba(255,255,255,0.2);
+    backdrop-filter:blur(14px);
+    box-shadow:0 20px 40px rgba(0,0,0,0.3);
+    transition:0.35s;
+    cursor:pointer;
+    text-align:center;
+}
+
+.card:hover{
+    transform:translateY(-10px) scale(1.03);
+    background:rgba(255,255,255,0.3);
+}
+
+.card h3{
+    margin:15px 0 8px;
+    font-size:20px;
+}
+
+.card p{
+    font-size:14px;
+    opacity:0.9;
+}
+
+.upload-box{
+    margin-top:15px;
+}
+
+.upload-box input,
+.upload-box select{
+    width:100%;
+    margin-top:10px;
+    padding:10px;
+    border:none;
+    border-radius:8px;
+}
+
+.upload-box button{
+    margin-top:14px;
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    background:#22c55e;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+}
+
+.section{
+    padding:40px;
+}
+
+.section-title{
+    font-size:24px;
+    text-align:center;
+    margin-bottom:25px;
+}
+
+.list-card{
+    background:rgba(255,255,255,0.18);
+    backdrop-filter:blur(12px);
+    border-radius:18px;
+    padding:20px;
+    margin-bottom:18px;
+    box-shadow:0 15px 30px rgba(0,0,0,0.25);
+}
+
+.sidebar{
+    position:fixed;
+    top:0;
+    right:-100%;
+    width:320px;
+    height:100%;
+    background:rgba(255,255,255,0.28);
+    backdrop-filter:blur(20px);
+    padding:25px;
+    transition:0.4s;
+    z-index:1000;
+}
+
+.sidebar.active{
+    right:0;
+}
+
+.dark .sidebar{
+    background:rgba(0,0,0,0.6);
+}
+
+.close{
+    text-align:right;
+    font-size:20px;
+    cursor:pointer;
+}
+
+.option{
+    margin-top:18px;
+}
+
+.option a,
+.option button{
+    width:100%;
+    padding:10px;
+    border:none;
+    border-radius:8px;
+    background:#6366f1;
+    color:white;
+    text-align:center;
+    text-decoration:none;
+    display:block;
+    cursor:pointer;
+}
+
+.option.red a{
+    background:#ef4444;
+}
+
+.overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.45);
+    display:none;
+    z-index:900;
+}
+
+.overlay.show{
+    display:block;
+}
+</style>
+</head>
+
+<body id="body" class="{{ 'dark' if theme=='dark' else '' }}">
+
+<a class="back-btn" href="#" onclick="confirmLogout()">← Back</a>
+
+<div class="topbar">
+    <div class="logo">☁ SecureCloud</div>
+    <div class="profile">
+        <div class="avatar">{{ user[0]|upper }}</div>
+        <div class="settings-btn" onclick="toggleSettings()">⚙️</div>
+    </div>
+</div>
+
+<div class="hero">
+    <h1>Welcome, {{ user|title }}</h1>
+    <p>Your encrypted personal cloud storage</p>
+</div>
+
+<div class="stats">
+    <div class="stat-card">
+        <b>Total Files</b>
+        <h2>{{ count }}</h2>
+    </div>
+
+    <div class="stat-card">
+        <b>Storage Used</b>
+        <div class="progress"><span></span></div>
+        <p>{{ size }} MB / {{ quota }} MB</p>
+    </div>
+
+    <div class="stat-card">
+        <b>Locked Files</b>
+        <h2>{{ locked }}</h2>
+    </div>
+</div>
+
+<div class="cards">
+
+    <div class="card">
+        <h3>⬆ Upload File</h3>
+        <p>Secure encrypted upload</p>
+        <div class="upload-box">
+            <form action="/upload" method="post" enctype="multipart/form-data">
+                <input type="file" name="file" required>
+                <label><input type="checkbox" name="lock"> Lock this file</label>
+                <input type="password" name="file_password" placeholder="File Password (optional)">
+                <select name="expiry">
+                    <option value="0">No Expiry</option>
+                    <option value="1">1 Day</option>
+                    <option value="7">7 Days</option>
+                    <option value="30">30 Days</option>
+                </select>
+                <button>Upload</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card" onclick="location.href='/myuploads'">
+        <h3>📁 My Uploads</h3>
+        <p>View your private files</p>
+    </div>
+
+    <div class="card" onclick="location.href='/change_password'">
+        <h3>🔐 Security</h3>
+        <p>Change password & protection</p>
+    </div>
+
+</div>
+
+<div class="section">
+    <div class="section-title">🕒 Recent Activity</div>
+    {% for l in logs %}
+    <div class="list-card">
+        {{ l[1] }} — {{ l[2] }}<br>
+        <small>{{ l[3] }}</small>
+    </div>
+    {% else %}
+    <div class="list-card">No recent activity</div>
+    {% endfor %}
+</div>
+
+<div class="section">
+    <div class="section-title">🔐 Security Tips</div>
+    <div class="list-card">• Lock sensitive documents</div>
+    <div class="list-card">• Use expiry for temporary files</div>
+    <div class="list-card">• Change password regularly</div>
+</div>
+
+<div class="overlay" id="overlay" onclick="toggleSettings()"></div>
+
+<div class="sidebar" id="sidebar">
+    <div class="close" onclick="toggleSettings()">✖</div>
+    <h3>Settings</h3>
+    <p><b>User:</b> {{ user|title }}</p>
+
+    <div class="option">
+        <button onclick="toggleTheme()">🌙 Toggle Theme</button>
+    </div>
+
+    <div class="option">
+        <a href="/myuploads">📁 My Uploads</a>
+    </div>
+
+    <div class="option">
+        <a href="/change_password">🔐 Change Password</a>
+    </div>
+
+    <div class="option red">
+        <a href="/logout">🚪 Logout</a>
+    </div>
+</div>
+
+<script>
+function toggleSettings(){
+    document.getElementById("sidebar").classList.toggle("active");
+    document.getElementById("overlay").classList.toggle("show");
+}
+function toggleTheme(){
+    window.location.href="/toggle_theme";
+}
+function confirmLogout(){
+    if(confirm("Are you sure you want to go back to login page?")){
+        window.location.href="/logout";
+    }
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>My Uploads</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    font-family:'Segoe UI',Arial;
+}
+
+body{
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    background:linear-gradient(135deg,#667eea,#764ba2);
+    color:white;
+    overflow-x:hidden;
+    scroll-behavior:smooth;
+}
+
+.dark{
+    background:#0f172a;
+}
+
+.back-btn{
+    position:fixed;
+    top:18px;
+    left:18px;
+    z-index:2000;
+    padding:8px 14px;
+    border-radius:10px;
+    background:rgba(0,0,0,0.35);
+    color:white;
+    text-decoration:none;
+    font-weight:600;
+    backdrop-filter:blur(8px);
+    transition:.3s;
+}
+.back-btn:hover{
+    background:rgba(255,255,255,0.25);
+}
+
+.container{
+    width:580px;
+    margin-top:90px;
+    margin-bottom:80px;
+    background:rgba(255,255,255,0.18);
+    backdrop-filter:blur(20px);
+    border-radius:26px;
+    padding:40px;
+    box-shadow:0 40px 80px rgba(0,0,0,0.45);
+    animation:drop 0.8s cubic-bezier(.25,.8,.25,1);
+}
+
+@keyframes drop{
+    from{transform:translateY(40px) scale(.95);opacity:0}
+    to{transform:translateY(0) scale(1);opacity:1}
+}
+
+h2{
+    text-align:center;
+    margin-bottom:30px;
+    font-size:28px;
+    letter-spacing:1px;
+}
+
+.file{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:linear-gradient(135deg,rgba(255,255,255,0.28),rgba(255,255,255,0.18));
+    padding:18px 22px;
+    border-radius:18px;
+    margin-bottom:18px;
+    transition:0.35s;
+    box-shadow:0 18px 35px rgba(0,0,0,0.35);
+    position:relative;
+    overflow:hidden;
+}
+
+.file::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(120deg,transparent,rgba(255,255,255,.18),transparent);
+    opacity:0;
+    transition:.35s;
+}
+
+.file:hover::after{
+    opacity:1;
+}
+
+.file:hover{
+    transform:translateY(-8px) scale(1.04);
+    box-shadow:0 30px 70px rgba(0,0,0,0.55);
+}
+
+.name{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    max-width:340px;
+}
+
+.icon{
+    font-size:22px;
+    animation:float 3s ease-in-out infinite;
+}
+
+@keyframes float{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-4px)}
+}
+
+.filename-wrap{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    max-width:260px;
+}
+
+.filename{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:200px;
+    font-weight:700;
+}
+
+.ext{
+    padding:4px 10px;
+    font-size:11px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.3);
+}
+
+.actions{
+    display:flex;
+    gap:12px;
+}
+
+.icon-btn{
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:18px;
+    text-decoration:none;
+    transition:0.3s;
+    cursor:pointer;
+}
+
+.icon-btn:hover{
+    transform:scale(1.25) rotate(8deg);
+}
+
+.download{
+    background:rgba(34,197,94,0.3);
+    color:#22c55e;
+}
+.download:hover{
+    background:#22c55e;
+    color:white;
+    box-shadow:0 0 25px #22c55e;
+}
+
+.delete{
+    background:rgba(239,68,68,0.3);
+    color:#ef4444;
+}
+.delete:hover{
+    background:#ef4444;
+    color:white;
+    box-shadow:0 0 25px #ef4444;
+}
+
+.locked{
+    background:rgba(251,191,36,0.35);
+    color:#facc15;
+    box-shadow:0 0 20px rgba(251,191,36,.6);
+}
+
+.section{
+    margin-top:55px;
+}
+
+.section-title{
+    font-size:24px;
+    text-align:center;
+    margin-bottom:22px;
+}
+
+/* UPDATED TIPS BOX (SCROLLABLE) */
+.tips-box{
+    max-height:160px;
+    overflow-y:auto;
+    padding-right:6px;
+}
+
+.list-card{
+    background:rgba(255,255,255,0.18);
+    backdrop-filter:blur(14px);
+    border-radius:18px;
+    padding:22px;
+    margin-bottom:18px;
+    box-shadow:0 18px 40px rgba(0,0,0,0.35);
+    transition:.3s;
+}
+
+.list-card:hover{
+    transform:translateY(-6px);
+    background:rgba(255,255,255,0.28);
+}
+
+.back{
+    display:block;
+    margin-top:35px;
+    text-align:center;
+    text-decoration:none;
+    color:white;
+    font-weight:600;
+    opacity:.9;
+}
+.back:hover{opacity:1}
+</style>
+</head>
+
+<body class="{{ 'dark' if theme=='dark' else '' }}">
+
+<a class="back-btn" href="/dashboard">← Back</a>
+
+<div class="container">
+
+<h2>My Files</h2>
+
+{% if files %}
+{% for f in files %}
+{% set parts = f[0].rsplit('.',1) %}
+<div class="file">
+    <div class="name">
+        <span class="icon">
+        {% if f[0].lower().endswith(('.jpg','.png','.jpeg','.webp','.gif')) %}
+            🖼
+        {% elif f[0].lower().endswith('.pdf') %}
+            📕
+        {% else %}
+            📁
+        {% endif %}
+        </span>
+
+        <div class="filename-wrap">
+            <span class="filename">{{ parts[0] }}</span>
+            <span class="ext">.{{ parts[1] if parts|length>1 else '' }}</span>
+        </div>
+    </div>
+
+    <div class="actions">
+        {% if f[1] %}
+        <span class="icon-btn locked">🔒</span>
+        {% endif %}
+        <a class="icon-btn download" href="/download/{{ f[0] }}">⬇</a>
+        <span class="icon-btn delete" onclick="confirmDelete('{{ f[0] }}')">🗑</span>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="list-card" style="text-align:center">No files uploaded yet</div>
+{% endif %}
+
+<div class="section">
+    <div class="section-title">✨ Tips</div>
+
+    <div class="tips-box">
+        <div class="list-card">• Use meaningful file names for easy access</div>
+        <div class="list-card">• Lock sensitive files for extra security</div>
+        <div class="list-card">• Delete unused files to save storage</div>
+        <div class="list-card">• Use expiry option for temporary uploads</div>
+    </div>
+</div>
+
+<a class="back" href="/dashboard">← Back to Dashboard</a>
+
+</div>
+
+<script>
+function confirmDelete(file){
+    if(confirm("Delete this file?\n\n"+file)){
+        window.location.href="/delete/"+file;
+    }
+}
+</script>
+
+</body>
+</html>
